@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caludio — El cerebro del dueño, clonado para todo tu equipo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<style>
+:root{
+  --noche:#060A12; --panel:#0B1220; --cian:#4DD8FF; --cian-suave:#8FE8FF;
+  --violeta:#8B7CFF; --crema:#F2F6FA; --gris:#7E8AA0; --linea:rgba(77,216,255,.14);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto!important}
+body{background:var(--noche);color:var(--crema);font-family:'Sora',sans-serif;font-weight:300;overflow-x:hidden;cursor:none}
+::selection{background:var(--cian);color:var(--noche)}
+
+/* LOADER */
+#loader{position:fixed;inset:0;background:var(--noche);z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px}
+#loader .marca{font-weight:800;font-size:clamp(34px,6vw,64px);letter-spacing:.08em;opacity:0}
+#loader .marca i{color:var(--cian);font-style:normal}
+#loader .barra{width:min(300px,60vw);height:1px;background:rgba(255,255,255,.08);overflow:hidden}
+#loader .barra b{display:block;height:100%;width:0%;background:var(--cian)}
+#loader .pct{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gris);letter-spacing:.2em}
+
+/* CURSOR */
+.cursor-dot,.cursor-ring{position:fixed;top:0;left:0;pointer-events:none;z-index:99;border-radius:50%;transform:translate(-50%,-50%)}
+.cursor-dot{width:6px;height:6px;background:var(--cian)}
+.cursor-ring{width:38px;height:38px;border:1px solid rgba(77,216,255,.45);transition:width .3s,height .3s,border-color .3s}
+body.cursor-hover .cursor-ring{width:64px;height:64px;border-color:var(--cian)}
+@media(hover:none){.cursor-dot,.cursor-ring{display:none}body{cursor:auto}}
+
+/* GRAIN + GLOW */
+#grain{position:fixed;inset:-50%;width:200%;height:200%;z-index:90;pointer-events:none;opacity:.045;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  animation:grain 8s steps(10) infinite}
+@keyframes grain{0%,100%{transform:translate(0,0)}20%{transform:translate(-5%,-8%)}40%{transform:translate(4%,-3%)}60%{transform:translate(-6%,5%)}80%{transform:translate(5%,7%)}}
+#glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 45% at 70% 35%,rgba(77,216,255,.07),transparent 65%),radial-gradient(ellipse 45% 40% at 20% 80%,rgba(139,124,255,.05),transparent 60%)}
+
+#escena3d{position:fixed;inset:0;z-index:1;pointer-events:none}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:24px clamp(20px,4vw,56px)}
+nav .logo{font-weight:800;font-size:20px;letter-spacing:.08em}
+nav .logo i{color:var(--cian);font-style:normal}
+nav .cta-mini{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--cian);border:1px solid var(--linea);padding:11px 20px;text-decoration:none;backdrop-filter:blur(8px);background:rgba(6,10,18,.4);transition:background .3s,color .3s}
+nav .cta-mini:hover{background:var(--cian);color:var(--noche)}
+
+.contenido{position:relative;z-index:2}
+.marco{padding:clamp(90px,14vh,170px) clamp(20px,5vw,70px);max-width:1280px;margin:0 auto}
+.kicker{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--cian);margin-bottom:22px;display:flex;align-items:center;gap:14px}
+.kicker::before{content:"";width:44px;height:1px;background:var(--cian)}
+.titulo{font-weight:700;font-size:clamp(32px,4.6vw,64px);line-height:1.12;letter-spacing:-.01em}
+.titulo i{font-style:normal;color:var(--cian)}
+.rev{overflow:hidden}
+.rev>*{display:block;transform:translateY(105%)}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;align-items:center;position:relative}
+#hero .marco{width:100%;padding-top:120px}
+#hero h1{font-weight:800;font-size:clamp(40px,6.6vw,96px);line-height:1.04;letter-spacing:-.02em;max-width:14ch}
+#hero h1 .linea{display:block;overflow:hidden}
+#hero h1 .linea span{display:inline-block;transform:translateY(112%)}
+#hero h1 i{font-style:normal;color:var(--cian)}
+#hero .sub{max-width:520px;color:var(--gris);font-size:16px;line-height:1.85;margin-top:28px}
+#hero .sub b{color:var(--crema);font-weight:600}
+.botonera{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap}
+.boton{display:inline-flex;align-items:center;gap:12px;padding:19px 38px;font-size:12px;letter-spacing:.24em;text-transform:uppercase;text-decoration:none;position:relative;overflow:hidden;transition:color .4s;font-weight:600}
+.boton.primario{background:var(--cian);color:var(--noche)}
+.boton.primario::before{content:"";position:absolute;inset:0;background:var(--crema);transform:scaleX(0);transform-origin:right;transition:transform .45s cubic-bezier(.76,0,.24,1)}
+.boton.primario:hover::before{transform:scaleX(1);transform-origin:left}
+.boton.primario span{position:relative;z-index:1}
+.boton.fantasma{border:1px solid var(--linea);color:var(--crema)}
+.boton.fantasma:hover{border-color:var(--cian);color:var(--cian)}
+.hero-chips{display:flex;gap:12px;margin-top:54px;flex-wrap:wrap;max-width:640px}
+.chip{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--gris);border:1px solid rgba(255,255,255,.09);background:rgba(11,18,32,.55);padding:11px 16px;border-radius:100px;backdrop-filter:blur(6px)}
+.chip b{color:var(--cian-suave);font-weight:400}
+
+/* PROBLEMA */
+#problema .grande{font-weight:700;font-size:clamp(30px,4.4vw,60px);line-height:1.16;max-width:20ch}
+#problema .grande i{font-style:normal;color:var(--cian)}
+#problema .detalle{color:var(--gris);max-width:560px;font-size:15px;line-height:1.9;margin-top:24px}
+.preguntas{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px;margin-top:56px}
+.preg{border:1px solid var(--linea);background:var(--panel);padding:24px;font-size:14.5px;line-height:1.6;color:var(--crema);position:relative;will-change:transform}
+.preg::before{content:"— vendedor";display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gris);margin-bottom:12px}
+.preg em{color:var(--cian-suave);font-style:normal}
+
+/* FEATURES */
+#features .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:56px}
+.feat{border:1px solid rgba(255,255,255,.07);background:linear-gradient(160deg,rgba(77,216,255,.045),rgba(11,18,32,.7));padding:30px 26px;transition:border-color .4s,transform .4s;will-change:transform}
+.feat:hover{border-color:var(--linea);transform:translateY(-5px)}
+.feat .num{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cian);letter-spacing:.25em;margin-bottom:18px}
+.feat h3{font-size:19px;font-weight:600;margin-bottom:12px}
+.feat p{color:var(--gris);font-size:13.5px;line-height:1.75}
+
+/* DIFERENCIAL (pin cinematográfico) */
+#diferencial{position:relative}
+#diferencial .escenario{min-height:100vh;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+#diferencial .frase{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 6vw;opacity:0}
+#diferencial .frase h3{font-weight:800;font-size:clamp(34px,6vw,84px);line-height:1.08;letter-spacing:-.02em;max-width:16ch}
+#diferencial .frase h3 i{font-style:normal;color:var(--cian)}
+#diferencial .frase p{position:absolute;bottom:16vh;left:50%;transform:translateX(-50%);color:var(--gris);font-size:14.5px;max-width:520px;line-height:1.8}
+
+/* ESTADISTICAS (chat) */
+#stats .doble{display:grid;grid-template-columns:1fr 1fr;gap:clamp(30px,5vw,80px);align-items:center}
+@media(max-width:900px){#stats .doble{grid-template-columns:1fr}}
+#stats .detalle{color:var(--gris);font-size:15px;line-height:1.9;margin-top:22px;max-width:480px}
+.telefono{border:1px solid rgba(255,255,255,.1);background:var(--panel);border-radius:26px;padding:26px 20px;max-width:420px;margin:0 auto;box-shadow:0 40px 90px rgba(0,0,0,.5)}
+.telefono .cab{display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,.07);padding-bottom:16px;margin-bottom:18px}
+.telefono .avatar{width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--cian-suave),var(--cian) 55%,#1b6f8d);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--noche);font-size:15px}
+.telefono .cab b{font-size:14px;font-weight:600;display:block}
+.telefono .cab span{font-family:'JetBrains Mono',monospace;font-size:10px;color:#39d97c;letter-spacing:.1em}
+.burbuja{max-width:88%;padding:13px 16px;border-radius:14px;font-size:13.5px;line-height:1.6;margin-bottom:12px;opacity:0;transform:translateY(14px)}
+.burbuja.mia{background:#123047;margin-left:auto;border-bottom-right-radius:4px}
+.burbuja.caludio{background:rgba(255,255,255,.055);border-bottom-left-radius:4px}
+.burbuja.caludio b{color:var(--cian-suave);font-weight:600}
+.burbuja .mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--cian-suave);display:block;margin-top:8px;line-height:1.7}
+
+/* LIMITES */
+#limites .fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:52px}
+.lim{border-top:2px solid var(--cian);background:var(--panel);padding:26px 24px}
+.lim h4{font-size:16px;font-weight:600;margin-bottom:10px}
+.lim h4::before{content:"⛔ ";font-size:13px}
+.lim.ok h4::before{content:"✓ ";color:#39d97c}
+.lim p{color:var(--gris);font-size:13px;line-height:1.7}
+
+/* PASOS */
+#pasos .linea-t{position:relative;margin-top:60px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}
+.paso{position:relative;padding:28px 24px;border:1px solid rgba(255,255,255,.07);background:rgba(11,18,32,.6)}
+.paso .n{font-family:'JetBrains Mono',monospace;font-size:34px;color:var(--cian);opacity:.9;line-height:1;margin-bottom:16px;display:block}
+.paso h4{font-size:16.5px;font-weight:600;margin-bottom:10px}
+.paso p{color:var(--gris);font-size:13px;line-height:1.7}
+
+/* CIFRAS */
+#cifras{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea)}
+#cifras .fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:30px;text-align:center}
+.cifra b{font-weight:800;font-size:clamp(40px,5vw,72px);display:block;line-height:1}
+.cifra b i{font-style:normal;color:var(--cian)}
+.cifra span{display:block;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gris)}
+
+/* CTA */
+#cta{text-align:center;position:relative}
+#cta h2{font-weight:800;font-size:clamp(38px,6.6vw,96px);line-height:1.05;letter-spacing:-.02em}
+#cta h2 i{font-style:normal;color:var(--cian)}
+#cta p{color:var(--gris);margin:26px auto 42px;max-width:460px;font-size:15px;line-height:1.85}
+
+/* MARQUEE */
+#marquee{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);overflow:hidden;padding:24px 0;white-space:nowrap}
+#marquee .tira{display:inline-block;will-change:transform}
+#marquee span{font-weight:700;font-size:clamp(20px,2.6vw,34px);letter-spacing:.14em;margin-right:64px;color:rgba(242,246,250,.85)}
+#marquee i{font-style:normal;color:var(--cian)}
+
+footer{padding:56px clamp(20px,5vw,70px);display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;color:var(--gris);font-size:12px;letter-spacing:.08em}
+footer b{font-weight:800;color:var(--crema);letter-spacing:.08em}
+footer b i{font-style:normal;color:var(--cian)}
+
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="marca">CALUD<i>IO</i></div>
+  <div class="barra"><b id="loader-fill"></b></div>
+  <div class="pct" id="loader-pct">00</div>
+</div>
+
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+<div id="grain"></div>
+<div id="glow"></div>
+<canvas id="escena3d"></canvas>
+
+<nav>
+  <div class="logo">CALUD<i>IO</i></div>
+  <a class="cta-mini" href="https://wa.me/5491159651328?text=Hola!%20Quiero%20una%20demo%20de%20Caludio" target="_blank" rel="noopener">Pedir demo</a>
+</nav>
+
+<div class="contenido">
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="marco" data-prof="-10">
+      <div class="kicker">Asistente de ventas con IA · por WhatsApp</div>
+      <h1>
+        <span class="linea"><span>El cerebro</span></span>
+        <span class="linea"><span>del dueño,</span></span>
+        <span class="linea"><span><i>clonado</i> para</span></span>
+        <span class="linea"><span>todo tu equipo.</span></span>
+      </h1>
+      <p class="sub">Caludio responde a tus vendedores <b>al instante, las 24 horas</b> — precios, descuentos, objeciones, presupuestos — exactamente como responderías vos. <b>Vos dejás de ser el cuello de botella.</b></p>
+      <div class="botonera">
+        <a class="boton primario" href="https://wa.me/5491159651328?text=Hola!%20Quiero%20una%20demo%20de%20Caludio" target="_blank" rel="noopener"><span>Quiero la demo</span></a>
+        <a class="boton fantasma" href="https://caludioia.com" target="_blank" rel="noopener">Ver página actual</a>
+      </div>
+      <div class="hero-chips">
+        <div class="chip"><b>●</b> en línea — responde al instante</div>
+        <div class="chip">voz humana integrada</div>
+        <div class="chip">presupuestos <b>PDF</b> al toque</div>
+        <div class="chip">conectado a <b>tu sistema</b></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEMA -->
+  <section id="problema">
+    <div class="marco">
+      <div class="kicker">01 — El problema</div>
+      <h2 class="grande rev"><span>En toda pyme con vendedores, <i>el dueño es el cuello de botella.</i></span></h2>
+      <p class="detalle">Tu equipo te interrumpe decenas de veces por día. Vos perdés horas. El vendedor queda trabado esperando tu respuesta. Y el conocimiento que hace cerrar ventas está en una sola cabeza: la tuya.</p>
+      <div class="preguntas">
+        <div class="preg">“¿A cuánto va el <em>aceite de 8 litros</em> para distribuidor?”</div>
+        <div class="preg">“¿Le puedo hacer un <em>descuento</em> a este cliente?”</div>
+        <div class="preg">“¿Qué le ofrezco a una <em>pizzería</em>?”</div>
+        <div class="preg">“Dice que en otro lado se lo dan <em>más barato</em>, ¿qué hago?”</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features">
+    <div class="marco">
+      <div class="kicker">02 — La solución</div>
+      <h2 class="titulo rev"><span>Tu mejor vendedor, <i>clonado y disponible para todos.</i></span></h2>
+      <p class="detalle" style="color:var(--gris);max-width:600px;font-size:15px;line-height:1.9;margin-top:22px">Un asistente de IA entrenado con tus precios, tus reglas, tus políticas y tu estilo de venta. Tus vendedores le preguntan por WhatsApp y les responde al instante.</p>
+      <div class="grid">
+        <div class="feat"><div class="num">/ 01</div><h3>Precios y presupuestos</h3><p>Busca el precio real en tu sistema y arma el presupuesto en PDF al instante.</p></div>
+        <div class="feat"><div class="num">/ 02</div><h3>Descuentos con tus reglas</h3><p>Aplica los límites que vos definís. Nunca regala margen ni inventa un precio.</p></div>
+        <div class="feat"><div class="num">/ 03</div><h3>Maneja objeciones</h3><p>Responde “está caro”, “en otro lado…” con TUS argumentos de venta.</p></div>
+        <div class="feat"><div class="num">/ 04</div><h3>Asesora por rubro</h3><p>Sabe qué ofrecerle a una pizzería, una distribuidora o un comercio.</p></div>
+        <div class="feat"><div class="num">/ 05</div><h3>Datos del cliente</h3><p>Historial, cuenta corriente y stock — consultados en vivo del sistema.</p></div>
+        <div class="feat"><div class="num">/ 06</div><h3>Responde con voz</h3><p>Audios con voz integrada, humana y natural. Cercano y al instante.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIFERENCIAL PIN -->
+  <section id="diferencial">
+    <div class="escenario">
+      <div class="frase" data-fr="0">
+        <h3>No es un <i>chatbot.</i></h3>
+        <p>Dos cosas que ningún robot de respuestas hace.</p>
+      </div>
+      <div class="frase" data-fr="1">
+        <h3>Responde con <i>audios</i> — voz humana integrada.</h3>
+        <p>Caludio le manda audios al vendedor con una voz natural y cercana — no un robot frío.</p>
+      </div>
+      <div class="frase" data-fr="2">
+        <h3>Arma el <i>presupuesto en PDF</i> al instante.</h3>
+        <p>Con tus precios reales, listo para reenviar al cliente y cerrar la venta.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS / CHAT -->
+  <section id="stats">
+    <div class="marco">
+      <div class="doble">
+        <div>
+          <div class="kicker">03 — El control</div>
+          <h2 class="titulo rev"><span>Las estadísticas de tu negocio, <i>al instante.</i></span></h2>
+          <p class="detalle">Conectá Caludio a tu sistema, tus listas de precios y tus clientes. Preguntale en palabras — como un mensaje de WhatsApp — y te contesta con el dato real: qué se vende más y qué menos, qué compra cada cliente y a qué precio, presupuestos y precios de meses pasados.</p>
+        </div>
+        <div class="telefono" id="chat-demo">
+          <div class="cab">
+            <div class="avatar">C</div>
+            <div><b>Caludio</b><span>● EN LÍNEA</span></div>
+          </div>
+          <div class="burbuja mia">¿Cuántos aceites de oliva 2L extra intenso vendí el mes pasado?</div>
+          <div class="burbuja caludio"><b>Caludio:</b> Vendiste <b>1.240 unidades</b> de Oliva 2L Extra Intenso en junio.<span class="mono">↑ 18% vs mayo · ticket prom. $391.500<br>Top comprador: DIST LA CENTRAL (280 u.)</span></div>
+          <div class="burbuja mia">¿Y a qué precio se lo vendí a La Central?</div>
+          <div class="burbuja caludio"><b>Caludio:</b> Lista G1 con 4% acordado: <b>$27.900/u</b>. Último presupuesto: 12/06, pagado por transferencia.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIMITES -->
+  <section id="limites">
+    <div class="marco">
+      <div class="kicker">04 — Tus reglas</div>
+      <h2 class="titulo rev"><span>Una herramienta para <i>vender más</i> — no para perder el control.</span></h2>
+      <div class="fila">
+        <div class="lim"><h4>No revela tus costos</h4><p>Los números sensibles quedan bajo llave. Solo vos los ves.</p></div>
+        <div class="lim"><h4>No inventa precios</h4><p>Si el precio no está en tu lista o tu sistema, no existe.</p></div>
+        <div class="lim"><h4>No decide fuera de tus límites</h4><p>Descuentos y condiciones siempre dentro de las reglas que definiste.</p></div>
+        <div class="lim ok"><h4>Si no lo sabe, te consulta</h4><p>El vendedor pregunta → Caludio te consulta a vos → le contesta al vendedor. Vos seguís mandando.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PASOS -->
+  <section id="pasos">
+    <div class="marco">
+      <div class="kicker">05 — Puesta en marcha</div>
+      <h2 class="titulo rev"><span>En marcha en <i>días, no meses.</i></span></h2>
+      <div class="linea-t">
+        <div class="paso"><span class="n">01</span><h4>Cargamos tu cerebro</h4><p>Tus precios, listas, reglas de descuento, argumentos y estilo de venta.</p></div>
+        <div class="paso"><span class="n">02</span><h4>Conectamos al equipo</h4><p>Tus vendedores le escriben por WhatsApp como a un compañero más.</p></div>
+        <div class="paso"><span class="n">03</span><h4>Vos seguís mandando</h4><p>Lo que no sabe te lo consulta. Nada sale de tus límites.</p></div>
+        <div class="paso"><span class="n">04</span><h4>Ajustes continuos</h4><p>Afinamos respuestas y reglas con el uso real de tu equipo.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CIFRAS -->
+  <section id="cifras">
+    <div class="marco">
+      <div class="fila">
+        <div class="cifra"><b><i data-count="24">0</i>hs</b><span>Disponible</span></div>
+        <div class="cifra"><b><i data-count="990">0</i>+</b><span>Productos que domina</span></div>
+        <div class="cifra"><b>&lt;<i data-count="10">0</i>s</b><span>Tiempo de respuesta</span></div>
+        <div class="cifra"><b><i data-count="0">0</i></b><span>Precios inventados</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="cta">
+    <div class="marco">
+      <div class="kicker" style="justify-content:center">06 — Empezá hoy</div>
+      <h2>Más ventas,<br><i>menos interrupciones.</i></h2>
+      <p>Escribinos y en la misma conversación te mostramos a Caludio respondiendo con tus productos y tus reglas.</p>
+      <a class="boton primario" href="https://wa.me/5491159651328?text=Hola!%20Quiero%20hablar%20sobre%20Caludio" target="_blank" rel="noopener"><span>Hablar por WhatsApp</span></a>
+    </div>
+  </section>
+
+  <div id="marquee"><div class="tira" id="tira">
+    <span>PRECIOS</span><span>·</span><span><i>PRESUPUESTOS PDF</i></span><span>·</span><span>OBJECIONES</span><span>·</span><span><i>VOZ HUMANA</i></span><span>·</span><span>ESTADÍSTICAS</span><span>·</span>
+    <span>PRECIOS</span><span>·</span><span><i>PRESUPUESTOS PDF</i></span><span>·</span><span>OBJECIONES</span><span>·</span><span><i>VOZ HUMANA</i></span><span>·</span><span>ESTADÍSTICAS</span><span>·</span>
+  </div></div>
+
+  <footer>
+    <div><b>CALUD<i>IO</i></b> — IA que vende como vos</div>
+    <div>DEMO PARALELA DE DISEÑO — LA PÁGINA OFICIAL SIGUE EN CALUDIOIA.COM</div>
+    <div>© 2026</div>
+  </footer>
+
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+
+gsap.registerPlugin(ScrollTrigger);
+const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esMobile = matchMedia('(max-width: 700px)').matches;
+
+/* ===== LOADER ===== */
+const fill = document.getElementById('loader-fill');
+const pct  = document.getElementById('loader-pct');
+gsap.to('#loader .marca', {opacity:1, duration:.8, ease:'power2.out'});
+const fake = {v:0};
+gsap.to(fake, {v:100, duration:1.4, ease:'power2.inOut',
+  onUpdate:()=>{ fill.style.width = fake.v+'%'; pct.textContent = String(Math.round(fake.v)).padStart(2,'0'); },
+  onComplete: cerrarLoader});
+function cerrarLoader(){
+  gsap.to('#loader', {yPercent:-100, duration:1, ease:'power4.inOut', delay:.15,
+    onComplete:()=> document.getElementById('loader').style.display='none'});
+  gsap.to('#hero h1 .linea span', {y:0, duration:1.15, ease:'power4.out', stagger:.1, delay:.4});
+  gsap.from('#hero .kicker, #hero .sub, .botonera, .hero-chips', {opacity:0, y:26, duration:1, stagger:.09, delay:.65, ease:'power2.out'});
+}
+
+/* ===== LENIS ===== */
+const lenis = new Lenis({ lerp:.09, smoothWheel: !reducido });
+lenis.on('scroll', ScrollTrigger.update);
+gsap.ticker.add(t => lenis.raf(t*1000));
+gsap.ticker.lagSmoothing(0);
+
+/* ===== CURSOR ===== */
+const dot=document.querySelector('.cursor-dot'), ring=document.querySelector('.cursor-ring');
+let mx=innerWidth/2,my=innerHeight/2,rx=mx,ry=my;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;dot.style.transform=`translate(${mx}px,${my}px) translate(-50%,-50%)`;});
+gsap.ticker.add(()=>{rx+=(mx-rx)*.14;ry+=(my-ry)*.14;ring.style.transform=`translate(${rx}px,${ry}px) translate(-50%,-50%)`;});
+document.querySelectorAll('a,.feat,.preg,.telefono').forEach(el=>{
+  el.addEventListener('mouseenter',()=>document.body.classList.add('cursor-hover'));
+  el.addEventListener('mouseleave',()=>document.body.classList.remove('cursor-hover'));
+});
+
+/* ===== MOUSE PARALLAX ===== */
+let nx=0, ny=0;
+addEventListener('mousemove',e=>{ nx=(e.clientX/innerWidth-.5)*2; ny=(e.clientY/innerHeight-.5)*2; });
+if(!reducido && !esMobile){
+  const capas=document.querySelectorAll('[data-prof]');
+  gsap.ticker.add(()=>{ capas.forEach(c=>{
+    const p=parseFloat(c.dataset.prof);
+    const x=gsap.getProperty(c,'x'), y=gsap.getProperty(c,'y');
+    gsap.set(c,{x:x+(nx*p-x)*.06, y:y+(ny*p*.6-y)*.06});
+  });});
+}
+
+/* ===== REVEALS ===== */
+document.querySelectorAll('.rev > *').forEach(el=>{
+  gsap.to(el,{y:0,duration:1.15,ease:'power4.out',scrollTrigger:{trigger:el.parentElement,start:'top 82%'}});
+});
+gsap.utils.toArray('.preg').forEach((el,i)=>{
+  gsap.from(el,{y:50,opacity:0,duration:.9,delay:i*.09,ease:'power3.out',scrollTrigger:{trigger:'.preguntas',start:'top 80%'}});
+});
+gsap.utils.toArray('.feat').forEach((el,i)=>{
+  gsap.from(el,{y:60,opacity:0,duration:.9,delay:(i%3)*.1,ease:'power3.out',scrollTrigger:{trigger:'#features .grid',start:'top 78%'}});
+});
+gsap.utils.toArray('.lim, .paso').forEach((el,i)=>{
+  gsap.from(el,{y:44,opacity:0,duration:.8,delay:(i%4)*.08,ease:'power2.out',scrollTrigger:{trigger:el,start:'top 88%'}});
+});
+
+/* ===== DIFERENCIAL: pin con 3 frases ===== */
+const frases = gsap.utils.toArray('#diferencial .frase');
+gsap.set(frases[0], {opacity:1});
+gsap.timeline({scrollTrigger:{trigger:'#diferencial .escenario', start:'top top', end:'+=220%', scrub:1, pin:true, anticipatePin:1}})
+  .to(frases[0], {opacity:0, scale:.94, ease:'none'}, .30)
+  .fromTo(frases[1], {opacity:0, scale:1.05}, {opacity:1, scale:1, ease:'none'}, .36)
+  .to(frases[1], {opacity:0, scale:.94, ease:'none'}, .63)
+  .fromTo(frases[2], {opacity:0, scale:1.05}, {opacity:1, scale:1, ease:'none'}, .69);
+
+/* ===== CHAT: burbujas que aparecen ===== */
+gsap.utils.toArray('#chat-demo .burbuja').forEach((b,i)=>{
+  gsap.to(b,{opacity:1,y:0,duration:.7,delay:i*.35,ease:'power2.out',
+    scrollTrigger:{trigger:'#chat-demo',start:'top 75%'}});
+});
+
+/* ===== COUNTERS ===== */
+document.querySelectorAll('[data-count]').forEach(el=>{
+  const objetivo=parseInt(el.dataset.count,10);
+  const o={v:0};
+  gsap.to(o,{v:objetivo,duration:1.8,ease:'power2.out',snap:{v:1},
+    onUpdate:()=>el.textContent=o.v,
+    scrollTrigger:{trigger:'#cifras',start:'top 82%'}});
+});
+
+/* ===== MARQUEE ===== */
+if(!reducido){ gsap.to('#tira',{xPercent:-50,duration:24,ease:'none',repeat:-1}); }
+
+/* ===== THREE.JS — esfera neuronal (el cerebro clonado) ===== */
+try{
+  const canvas=document.getElementById('escena3d');
+  const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.setSize(innerWidth,innerHeight);
+  const escena=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,60);
+  cam.position.set(0,0,9);
+
+  const grupo=new THREE.Group();
+
+  // nodos sobre esfera (fibonacci)
+  const N = esMobile? 240 : 420, R = 2.05;
+  const posiciones=new Float32Array(N*3);
+  const puntos=[];
+  for(let i=0;i<N;i++){
+    const phi=Math.acos(1-2*(i+.5)/N), th=Math.PI*(1+Math.sqrt(5))*i;
+    const x=R*Math.sin(phi)*Math.cos(th), y=R*Math.cos(phi), z=R*Math.sin(phi)*Math.sin(th);
+    posiciones.set([x,y,z],i*3); puntos.push(new THREE.Vector3(x,y,z));
+  }
+  const pg=new THREE.BufferGeometry();
+  pg.setAttribute('position',new THREE.BufferAttribute(posiciones,3));
+  const nodos=new THREE.Points(pg,new THREE.PointsMaterial({color:0x8FE8FF,size:.045,transparent:true,opacity:.95,depthWrite:false}));
+  grupo.add(nodos);
+
+  // sinapsis: conectar vecinos cercanos
+  const segs=[];
+  for(let i=0;i<N;i++){
+    let mejores=[];
+    for(let j=i+1;j<N;j++){
+      const d=puntos[i].distanceTo(puntos[j]);
+      if(d<.62) mejores.push([d,j]);
+    }
+    mejores.sort((a,b)=>a[0]-b[0]).slice(0,2).forEach(([,j])=>{
+      segs.push(puntos[i].x,puntos[i].y,puntos[i].z,puntos[j].x,puntos[j].y,puntos[j].z);
+    });
+  }
+  const lg=new THREE.BufferGeometry();
+  lg.setAttribute('position',new THREE.BufferAttribute(new Float32Array(segs),3));
+  const sinapsis=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0x4DD8FF,transparent:true,opacity:.22}));
+  grupo.add(sinapsis);
+
+  // núcleo brillante
+  const nucleo=new THREE.Mesh(new THREE.SphereGeometry(.55,32,32),
+    new THREE.MeshBasicMaterial({color:0x123047,transparent:true,opacity:.85}));
+  grupo.add(nucleo);
+  const halo=new THREE.Mesh(new THREE.SphereGeometry(.62,32,32),
+    new THREE.MeshBasicMaterial({color:0x4DD8FF,transparent:true,opacity:.16}));
+  grupo.add(halo);
+
+  grupo.position.set(esMobile? 0 : 3.0, esMobile? 2.6 : .1, 0);
+  grupo.scale.setScalar(esMobile? .6 : 1);
+  escena.add(grupo);
+
+  // polvo ambiente
+  const M = esMobile? 160 : 380;
+  const pp=new Float32Array(M*3);
+  for(let i=0;i<M;i++){ pp[i*3]=(Math.random()-.5)*17; pp[i*3+1]=(Math.random()-.5)*10; pp[i*3+2]=(Math.random()-.5)*6-1.2; }
+  const dg=new THREE.BufferGeometry();
+  dg.setAttribute('position',new THREE.BufferAttribute(pp,3));
+  const polvo=new THREE.Points(dg,new THREE.PointsMaterial({color:0x4DD8FF,size:.02,transparent:true,opacity:.4,depthWrite:false}));
+  escena.add(polvo);
+
+  // arco narrativo con el scroll
+  if(!reducido){
+    gsap.timeline({scrollTrigger:{trigger:'.contenido',start:'top top',end:'bottom bottom',scrub:1.4}})
+      .to(grupo.position,{x: esMobile? 0 : -3.2, y: 0, ease:'none'}, .07)   // problema: izquierda
+      .to(grupo.position,{x: 0, y: 0, ease:'none'}, .30)                     // diferencial: centro
+      .to(grupo.scale,  {x:1.25,y:1.25,z:1.25, ease:'none'}, .30)
+      .to(grupo.scale,  {x:.55,y:.55,z:.55, ease:'none'}, .52)               // chat: se achica
+      .to(grupo.position,{x: esMobile? 0 : -3.0, ease:'none'}, .52)
+      .to(grupo.position,{x: 0, y: .2, ease:'none'}, .86)                    // cta: vuelve al centro
+      .to(grupo.scale,  {x:1.05,y:1.05,z:1.05, ease:'none'}, .86)
+      .to(grupo.rotation,{y: Math.PI*2.4, ease:'none'}, 0);
+  }
+
+  const reloj=new THREE.Clock();
+  let visible=true;
+  document.addEventListener('visibilitychange',()=>visible=!document.hidden);
+  renderer.setAnimationLoop(()=>{
+    if(!visible) return;
+    const t=reloj.getElapsedTime();
+    grupo.rotation.y+=.0018;
+    grupo.rotation.x=Math.sin(t*.2)*.06;
+    halo.scale.setScalar(1+Math.sin(t*1.6)*.05);
+    polvo.rotation.y=t*.012;
+    cam.position.x+=((nx*.7)-cam.position.x)*.03;
+    cam.position.y+=((-ny*.45)-cam.position.y)*.03;
+    cam.lookAt(0,0,0);
+    renderer.render(escena,cam);
+  });
+  addEventListener('resize',()=>{
+    cam.aspect=innerWidth/innerHeight; cam.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+  });
+}catch(e){ console.warn('WebGL no disponible:',e); }
+</script>
+</body>
+</html>
