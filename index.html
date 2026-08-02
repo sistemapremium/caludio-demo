@@ -347,7 +347,6 @@ footer b i{font-style:normal;color:var(--cian)}
 
 <script type="module">
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 gsap.registerPlugin(ScrollTrigger);
 const reducido = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -444,22 +443,81 @@ try{
   renderer.setPixelRatio(Math.min(devicePixelRatio,2));
   renderer.setSize(innerWidth,innerHeight);
   const escena=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.1,60);
-  cam.position.set(0,0,9);
+  const cam=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,60);
+  cam.position.set(0,1.2,7);
 
-  // entorno físico para reflejos reales (lo que separa "juguete" de "render")
-  const pmrem=new THREE.PMREMGenerator(renderer);
-  escena.environment=pmrem.fromScene(new RoomEnvironment(renderer), .04).texture;
-
-  // luces de acento cine
-  const rim1=new THREE.DirectionalLight(0x4DD8FF, 3.0); rim1.position.set(-4, 2,-4); escena.add(rim1);
-  const rim2=new THREE.DirectionalLight(0x8B7CFF, 2.0); rim2.position.set( 4,-2,-3); escena.add(rim2);
-  const key =new THREE.DirectionalLight(0xffffff, .55); key.position.set( 3, 5, 5);  escena.add(key);
+  // ===== MAR DE ONDAS DE SONIDO (la voz de Caludio) =====
+  const uniforms={ uTime:{value:0}, uAmp:{value:.8}, uPR:{value:Math.min(devicePixelRatio,2)} };
+  const COLS=esMobile?150:260, ROWS=esMobile?42:70, W=30, D=15;
+  const total=COLS*ROWS;
+  const wpos=new Float32Array(total*3);
+  let k=0;
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      wpos[k++]=(c/(COLS-1)-.5)*W;      // x
+      wpos[k++]=0;                       // y (la onda la pone el shader)
+      wpos[k++]=1-(r/(ROWS-1))*D;        // z: desde cerca (1) hacia el fondo (-14)
+    }
+  }
+  const wgeo=new THREE.BufferGeometry();
+  wgeo.setAttribute('position',new THREE.BufferAttribute(wpos,3));
+  const wmat=new THREE.ShaderMaterial({
+    uniforms, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    vertexShader:`
+uniform float uTime; uniform float uAmp; uniform float uPR;
+varying float vElev; varying float vFog;
+vec3 permute(vec3 x){return mod(((x*34.0)+1.0)*x,289.0);}
+float snoise(vec2 v){
+  const vec4 C=vec4(0.211324865405187,0.366025403784439,-0.577350269189626,0.024390243902439);
+  vec2 i=floor(v+dot(v,C.yy));
+  vec2 x0=v-i+dot(i,C.xx);
+  vec2 i1=(x0.x>x0.y)?vec2(1.0,0.0):vec2(0.0,1.0);
+  vec4 x12=x0.xyxy+C.xxzz; x12.xy-=i1;
+  i=mod(i,289.0);
+  vec3 p=permute(permute(i.y+vec3(0.0,i1.y,1.0))+i.x+vec3(0.0,i1.x,1.0));
+  vec3 m=max(0.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.0);
+  m=m*m; m=m*m;
+  vec3 x=2.0*fract(p*C.www)-1.0;
+  vec3 h=abs(x)-0.5;
+  vec3 ox=floor(x+0.5);
+  vec3 a0=x-ox;
+  m*=1.79284291400159-0.85373472095314*(a0*a0+h*h);
+  vec3 g;
+  g.x=a0.x*x0.x+h.x*x0.y;
+  g.yz=a0.yz*x12.xz+h.yz*x12.yw;
+  return 130.0*dot(m,g);
+}
+void main(){
+  vec3 p=position;
+  float h=0.0;
+  h+=sin(p.x*0.5+uTime*0.8)*0.25;
+  h+=sin(p.x*1.6-uTime*0.5)*0.10;
+  h+=sin(p.x*0.7+p.z*1.4+uTime*1.1)*0.14;
+  h+=snoise(vec2(p.x*0.22,p.z*0.3-uTime*0.12))*0.42;
+  h*=uAmp;
+  p.y+=h;
+  vElev=h;
+  vec4 mv=modelViewMatrix*vec4(p,1.0);
+  vFog=smoothstep(-16.0,-3.0,mv.z);
+  gl_PointSize=uPR*(2.2+max(h,0.0)*4.0)*(6.0/-mv.z);
+  gl_Position=projectionMatrix*mv;
+}`,
+    fragmentShader:`
+varying float vElev; varying float vFog;
+void main(){
+  vec2 c=gl_PointCoord-0.5;
+  if(dot(c,c)>0.25) discard;
+  vec3 col=mix(vec3(0.05,0.15,0.24),vec3(0.30,0.85,1.0),clamp(vElev*1.4+0.35,0.0,1.0));
+  float a=(0.26+clamp(vElev,0.0,1.0)*0.55)*vFog;
+  gl_FragColor=vec4(col,a);
+}`
+  });
+  const malla=new THREE.Points(wgeo,wmat);
+  malla.position.y=-2.1;
+  escena.add(malla);
 
   const grupo=new THREE.Group();
-
-  // ORBE de vidrio líquido: esfera de alta resolución deformada por ruido en GPU
-  const uniforms={ uTime:{value:0} };
+  /* (orbe eliminado — el actor 3D ahora es el mar de ondas)
   const geo=new THREE.SphereGeometry(1.9, esMobile?96:128, esMobile?96:128);
   const mat=new THREE.MeshPhysicalMaterial({
     color:0x0a1b2b, metalness:.2, roughness:.22,
@@ -518,10 +576,7 @@ transformed+=normal*(onda*.035+detalle*.012);
   const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(gcv),transparent:true,opacity:.38,blending:THREE.AdditiveBlending,depthWrite:false}));
   glow.scale.set(6,6,1); glow.position.z=-1.6;
   grupo.add(glow);
-
-  grupo.position.set(esMobile? 0 : 3.0, esMobile? 2.6 : .1, 0);
-  grupo.scale.setScalar(esMobile? .6 : 1);
-  escena.add(grupo);
+  */
 
   // polvo ambiente
   const M = esMobile? 160 : 380;
@@ -532,17 +587,14 @@ transformed+=normal*(onda*.035+detalle*.012);
   const polvo=new THREE.Points(dg,new THREE.PointsMaterial({color:0x4DD8FF,size:.02,transparent:true,opacity:.4,depthWrite:false}));
   escena.add(polvo);
 
-  // arco narrativo con el scroll
+  // arco narrativo: la energía de la ola acompaña el relato
   if(!reducido){
-    gsap.timeline({scrollTrigger:{trigger:'.contenido',start:'top top',end:'bottom bottom',scrub:1.4}})
-      .to(grupo.position,{x: esMobile? 0 : -3.2, y: 0, ease:'none'}, .07)   // problema: izquierda
-      .to(grupo.position,{x: 0, y: 0, ease:'none'}, .30)                     // diferencial: centro
-      .to(grupo.scale,  {x:1.25,y:1.25,z:1.25, ease:'none'}, .30)
-      .to(grupo.scale,  {x:.55,y:.55,z:.55, ease:'none'}, .52)               // chat: se achica
-      .to(grupo.position,{x: esMobile? 0 : -3.0, ease:'none'}, .52)
-      .to(grupo.position,{x: 0, y: .2, ease:'none'}, .86)                    // cta: vuelve al centro
-      .to(grupo.scale,  {x:1.05,y:1.05,z:1.05, ease:'none'}, .86)
-      .to(grupo.rotation,{y: Math.PI*2.4, ease:'none'}, 0);
+    gsap.timeline({scrollTrigger:{trigger:'.contenido',start:'top top',end:'bottom bottom',scrub:1.2}})
+      .to(uniforms.uAmp,{value:1.55, ease:'none'}, .28)   // "responde con audios": la voz se agita
+      .to(uniforms.uAmp,{value:.5,  ease:'none'}, .52)    // chat/estadísticas: calma
+      .to(uniforms.uAmp,{value:1.15, ease:'none'}, .85)   // cta: vuelve la energía
+      .to(malla.position,{y:-1.7, ease:'none'}, .28)      // la ola sube un poco en el momento fuerte
+      .to(malla.position,{y:-2.3, ease:'none'}, .55);
   }
 
   const reloj=new THREE.Clock();
@@ -552,13 +604,10 @@ transformed+=normal*(onda*.035+detalle*.012);
     if(!visible) return;
     const t=reloj.getElapsedTime();
     uniforms.uTime.value=t;
-    grupo.rotation.y+=.0012;
-    grupo.rotation.x=Math.sin(t*.18)*.05;
-    glow.material.opacity=.36+Math.sin(t*1.1)*.05;
     polvo.rotation.y=t*.012;
-    cam.position.x+=((nx*.7)-cam.position.x)*.03;
-    cam.position.y+=((-ny*.45)-cam.position.y)*.03;
-    cam.lookAt(0,0,0);
+    cam.position.x+=((nx*.9)-cam.position.x)*.03;
+    cam.position.y+=((1.2-ny*.4)-cam.position.y)*.03;
+    cam.lookAt(0,-.6,-5);
     renderer.render(escena,cam);
   });
   addEventListener('resize',()=>{
