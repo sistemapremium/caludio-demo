@@ -332,6 +332,17 @@ footer .brand{font-size:18px;color:var(--txt)}
 <style id="reskin">
 .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.32em;color:var(--green)}
 #olas{position:fixed;inset:0;z-index:-1;pointer-events:none}
+/* --- BOTONES PRO: rectos, mayusculas, espaciado --- */
+.btn{border-radius:4px;text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;font-weight:600;font-family:'Sora',sans-serif;padding:17px 30px}
+.btn svg{width:16px;height:16px}
+.btn-pri{background:var(--green);color:#051018;box-shadow:0 14px 38px -14px rgba(77,216,255,.55)}
+.btn-pri:hover{background:#8FE8FF;transform:translateY(-2px);box-shadow:0 20px 46px -14px rgba(77,216,255,.6)}
+.btn-ghost:hover{border-color:var(--green);color:var(--green);background:rgba(77,216,255,.06);transform:translateY(-2px)}
+.nav-cta{padding:11px 18px;font-size:11px}
+/* --- lanzador del chat en vivo: glass + borde cian, sin pastilla --- */
+.cw-btn{display:flex;align-items:center;gap:10px;background:rgba(6,10,18,.82);backdrop-filter:blur(10px);border:1px solid var(--green);color:var(--green);border-radius:6px;padding:15px 22px;font-family:'Sora',sans-serif;font-weight:600;font-size:12px;letter-spacing:.16em;text-transform:uppercase;box-shadow:0 18px 44px -16px rgba(77,216,255,.4)}
+.cw-btn:hover{background:var(--green);color:#051018}
+.cw-btn svg{width:16px;height:16px;flex:none}
 </style>
 <noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
 </head>
@@ -357,7 +368,7 @@ footer .brand{font-size:18px;color:var(--txt)}
         </span>
         Caludio
       </a>
-      <div class="nav-links"><a href="https://caludioia.com/presentacion" style="color:var(--gold);font-weight:600">✦ Presentación</a>
+      <div class="nav-links"><a href="https://caludioia.com/presentacion" style="color:var(--gold);font-weight:600">Presentación</a>
         <a href="#problema">El problema</a>
         <a href="#que-es">Qué es</a>
         <a href="#datos">Estadísticas</a>
@@ -622,7 +633,7 @@ footer .brand{font-size:18px;color:var(--txt)}
       <h2>Mirá cómo responde Caludio</h2>
       <p>Un vendedor pregunta, Caludio resuelve al instante — con datos reales, voz y sin regalar margen.</p>
       <div class="reveal" style="max-width:540px;margin:18px auto 0;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;text-align:left">
-        <div style="font-weight:700;margin-bottom:6px">🎧 Escuchá un informe de ventas de Caludio</div>
+        <div style="font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:9px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--green);flex:none"><path d="M4 13a8 8 0 0 1 16 0v5"/><rect x="3" y="13" width="4" height="7" rx="2"/><rect x="17" y="13" width="4" height="7" rx="2"/></svg>Escuchá un informe de ventas de Caludio</div>
         <div style="font-size:13.5px;opacity:.75;margin-bottom:10px">Le preguntás cómo venís y te lo cuenta con números — como una nota de voz.</div>
         <audio controls preload="none" style="width:100%"><source src="https://caludioia.com/venta/caludio_informe.mp3" type="audio/mpeg"></audio>
       </div>
@@ -645,7 +656,7 @@ footer .brand{font-size:18px;color:var(--txt)}
         <div class="demo-pt"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></span> Presupuesto en PDF listo para mandar</div>
         <div class="demo-pt"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></span> Descuento siempre dentro de TUS límites</div>
         <div class="demo-pt"><span class="d-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg></span> Responde con voz integrada (humana)</div>
-        <button class="btn btn-pri" style="margin-top:26px" onclick="cwOpen()">🎤 Probá a Caludio vos mismo
+        <button class="btn btn-pri" style="margin-top:26px" onclick="cwOpen()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/></svg> Probá a Caludio vos mismo
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
         </button>
       </div>
@@ -701,12 +712,12 @@ footer .brand{font-size:18px;color:var(--txt)}
         </ul>
       </div>
     </div>
-    <div class="ref reveal" style="margin-bottom:14px">🔊 Respuestas con <b>voz integrada</b> y 📄 <b>presupuestos en PDF</b> van <b>incluidos</b>. El abono se ubica según el <b>volumen de audios</b> (la voz tiene costo por uso).</div>
+    <div class="ref reveal" style="margin-bottom:14px">Respuestas con <b>voz integrada</b> y <b>presupuestos en PDF</b> van <b>incluidos</b>. El abono se ubica según el <b>volumen de audios</b> (la voz tiene costo por uso).</div>
     <div class="ref reveal">Un vendedor en Argentina cuesta entre <b><span data-usd="600">$—</span></b> y <b><span data-usd="1200">$—</span> / mes</b> en sueldo + cargas. Caludio le da respuestas instantáneas 24 h — <b>y les paga a todos a la vez.</b></div>
     
 
     <div class="calc reveal">
-      <h3>🧮 Calculá tu precio estimado</h3>
+      <h3>Calculá tu precio estimado</h3>
       <div class="csub">Respondé 3 cosas y te damos un número orientativo al instante.</div>
       <div class="calc-q">
         <span class="ql">1. ¿Cuántos productos vendés?</span>
@@ -736,7 +747,7 @@ footer .brand{font-size:18px;color:var(--txt)}
         <div class="rb"><div class="rl">Abono mensual</div><div class="rv grad" id="cAbono">$—</div></div>
       </div>
       <div class="calc-note">Pagás exactamente lo que seleccionaste. El abono mensual queda como suscripción automática.</div>
-      <button id="btnContratar" onclick="contratarCaludio()" class="btn btn-pri" style="margin:18px auto 6px;display:block;width:max-content;cursor:pointer;border:0;font-family:inherit;font-size:17px;padding:16px 38px">Contratar ahora</button>
+      <button id="btnContratar" onclick="contratarCaludio()" class="btn btn-pri" style="margin:18px auto 6px;display:block;width:max-content;cursor:pointer;border:0;font-family:inherit;padding:18px 38px">Contratar ahora</button>
       <div style="font-size:12px;opacity:.65;text-align:center;margin-bottom:10px">Pago seguro con Mercado Pago · tarjeta, débito, transferencia o efectivo</div>
       <div id="contratarMsg" style="font-size:13px;color:var(--gold);text-align:center;margin-bottom:12px"></div>
       <a href="https://wa.me/5491159651328?text=Hola!%20Quiero%20hablar%20sobre%20Caludio%20antes%20de%20contratar" target="_blank" class="btn btn-ghost" style="margin:0 auto;width:max-content;display:flex;align-items:center;gap:8px">
@@ -794,7 +805,7 @@ footer .brand{font-size:18px;color:var(--txt)}
   <div class="wrap reveal">
     <h2>¿Listo para clonar tu cerebro?</h2>
     <p>Pedí una demo de 15 minutos. Te mostramos a Caludio respondiendo como vos — en vivo.</p>
-    <a href="https://wa.me/5491159651328?text=Hola!%20Quiero%20una%20demo%20de%20Caludio" class="btn btn-pri" id="ctaWa" style="font-size:18px;padding:18px 34px">
+    <a href="https://wa.me/5491159651328?text=Hola!%20Quiero%20una%20demo%20de%20Caludio" class="btn btn-pri" id="ctaWa" style="padding:20px 40px">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15l-1.3 4.7 4.8-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-1.7-.1-.4-.1-.9-.3-1.6-.6-2.8-1.2-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 .9-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.2.1.4 0 .5l-.4.5c-.2.2-.3.4-.2.6.5.9 1.1 1.5 1.8 2 .3.2.6.2.8 0l.6-.7c.2-.2.4-.2.6-.1l1.8.9c.2.1.4.2.4.3.1.2.1.8-.1 1.4Z"/></svg>
       Pedir una demo por WhatsApp
     </a>
@@ -802,7 +813,7 @@ footer .brand{font-size:18px;color:var(--txt)}
 </section>
 
 <!-- ============ WIDGET: PROBAR A CALUDIO EN VIVO ============ -->
-<button class="cw-btn" id="cwBtn" onclick="cwOpen()">🎤 Probá a Caludio gratis</button>
+<button class="cw-btn" id="cwBtn" onclick="cwOpen()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><path d="M12 17v4"/></svg><span>Probá a Caludio gratis</span></button>
 <div class="cw-panel" id="cwPanel">
   <div class="cw-top">
     <div class="av">C</div>
@@ -921,7 +932,7 @@ async function cwSend(){
     document.getElementById('cwSt').textContent='en línea · responde al instante';
     document.getElementById('cwNote').textContent=cwLeft>0?('Demo en vivo · te quedan '+cwLeft+' respuesta'+(cwLeft===1?'':'s')):'Fin de la demo 🙌';
     if(cwLeft<=0||d.fin)cwEnd();
-  }catch(e){load.remove();cwAdd('Se me cortó la conexión un segundo 🙏. Probá de nuevo, o si querés seguimos por WhatsApp que no falla:','in');document.getElementById('cwSt').textContent='en línea';cwWaCta('💬 Seguí la charla por WhatsApp 👉','Hola! Estaba probando a Caludio en la web y quiero seguir por acá');}
+  }catch(e){load.remove();cwAdd('Se me cortó la conexión un segundo 🙏. Probá de nuevo, o si querés seguimos por WhatsApp que no falla:','in');document.getElementById('cwSt').textContent='en línea';cwWaCta('Seguí la charla por WhatsApp','Hola! Estaba probando a Caludio en la web y quiero seguir por acá');}
   cwBusy=false;
 }
 function cwEnd(){
@@ -929,13 +940,13 @@ function cwEnd(){
   const inp=document.getElementById('cwIn');inp.disabled=true;inp.placeholder='Demo terminada';
   document.getElementById('cwMic').style.display='none';
   cwAdd('Hasta acá la prueba 🙌 Con TUS productos cargados esto sería exacto. Seguí la charla por WhatsApp y te muestro todo:','in');
-  cwWaCta('💬 Seguí la charla por WhatsApp 👉','Hola! Probé a Caludio y quiero la demo completa');
+  cwWaCta('Seguí la charla por WhatsApp','Hola! Probé a Caludio y quiero la demo completa');
 }
 function cwWaCta(label,text){
   const f=document.querySelector('.cw-foot');if(!f||f.querySelector('.cw-cta'))return;
   const a=document.createElement('a');
   a.href='https://wa.me/5491159651328?text='+encodeURIComponent(text||'Hola! Quiero la demo completa de Caludio');
-  a.target='_blank';a.rel='noopener';a.className='cw-cta';a.textContent=label||'💬 Seguí la charla por WhatsApp 👉';
+  a.target='_blank';a.rel='noopener';a.className='cw-cta';a.textContent=label||'Seguí la charla por WhatsApp';
   f.appendChild(a);
 }
 function cwMicHint(t){cwAdd(t,'in');const inp=document.getElementById('cwIn');if(inp&&!inp.disabled)inp.focus();document.getElementById('cwSt').textContent='en línea · responde al instante';}
@@ -987,7 +998,7 @@ async function contratarCaludio(){
   var ab=+(p.get('abono')||350);
   var d=document.createElement('div');
   d.style.cssText='position:fixed;left:0;right:0;bottom:0;background:#0B1220;border-top:2px solid var(--green);padding:16px 18px;text-align:center;z-index:95;font-family:inherit;color:#e8f3ee';
-  d.innerHTML='<b>¡Setup pagado! 🎉</b> Último paso: activá tu <b>abono mensual automático</b>. <button id="btnAbono" class="btn btn-pri" style="margin-left:10px;cursor:pointer;border:0;font-family:inherit">Activar abono mensual</button>';
+  d.innerHTML='<b>¡Setup pagado!</b> Último paso: activá tu <b>abono mensual automático</b>. <button id="btnAbono" class="btn btn-pri" style="margin-left:10px;cursor:pointer;border:0;font-family:inherit">Activar abono mensual</button>';
   document.body.appendChild(d);
   document.getElementById('btnAbono').onclick=async function(){
     this.disabled=true;this.textContent='Abriendo…';
